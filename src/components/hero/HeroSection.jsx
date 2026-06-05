@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import NetworkCanvas from './NetworkCanvas';
 
 export default function HeroSection() {
   const { t, openOnboarding } = useApp();
+  const navigate = useNavigate();
 
   return (
     <section
@@ -15,26 +17,6 @@ export default function HeroSection() {
         background: '#0a1628',
       }}
     >
-      {/* ── Sharp Static Background Image ── */}
-      <img
-        src="/map-bg.png.jpeg"
-        alt=""
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: 0,
-        }}
-      />
-
-      {/* ── Dimming Overlay ── */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        style={{ zIndex: 1 }}
-      />
-
       {/* ── Crystal-Clear Canvas Animation Layer ── */}
       <div
         style={{
@@ -76,7 +58,7 @@ export default function HeroSection() {
               className="w-1.5 h-1.5 rounded-full animate-pulse"
               style={{ background: '#76fbd3', boxShadow: '0 0 6px #76fbd3' }}
             />
-            Live Network — 195+ Countries Connected
+            EU AI Act Enforcement: August 2026 — 90 Days Remaining
           </motion.div>
 
           {/* Main headline — Orbitron, scaled to match reference */}
@@ -132,18 +114,19 @@ export default function HeroSection() {
             transition={{ delay: 0.9 }}
           >
             <motion.button
-              onClick={openOnboarding}
+              onClick={() => navigate('/auth')}
               className="pill-btn-primary font-orbitron font-bold text-xs tracking-widest"
-              style={{ minWidth: '200px' }}
+              style={{ minWidth: '220px' }}
               whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(118,251,211,0.55), 0 0 80px rgba(118,251,211,0.22)' }}
               whileTap={{ scale: 0.97 }}
             >
-              CONNECT NOW
+              {t('hero_connect')}
             </motion.button>
 
             <motion.button
+              onClick={() => navigate('/auth')}
               className="pill-btn-secondary font-orbitron font-bold text-xs tracking-widest"
-              style={{ minWidth: '200px' }}
+              style={{ minWidth: '220px' }}
               whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(22,181,236,0.45), 0 0 60px rgba(22,181,236,0.18)' }}
               whileTap={{ scale: 0.97 }}
             >

@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+
 import UnifiedNetworkDive from './deep-dives/UnifiedNetworkDive';
 import SecurePaymentsDive from './deep-dives/SecurePaymentsDive';
 import InternationalMarketsDive from './deep-dives/InternationalMarketsDive';
 import VirtualHQDive from './deep-dives/VirtualHQDive';
 
 /* ── Holographic SVG Illustrations ── */
-
 function GlobeIcon() {
   return (
     <svg viewBox="0 0 120 120" width="110" height="110" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -185,7 +185,7 @@ const CARDS = [
     id: 'network',
     Icon: GlobeIcon,
     titleKey: 'bento_network',
-    desc: 'A glowing network hub with real-time data center monitoring, server status, and intelligent load balancing across 195+ countries.',
+    desc: 'Cryptographically signed model versioning with tamper-proof logging. Every training run, hyperparameter change, and deployment tracked with blockchain-grade immutability for regulatory audits.',
     color: '#76fbd3',
     glowColor: 'rgba(118,251,211,0.25)',
     borderColor: 'rgba(118,251,211,0.28)',
@@ -196,7 +196,7 @@ const CARDS = [
     id: 'payments',
     Icon: PaymentsIcon,
     titleKey: 'bento_payments',
-    desc: 'Secure payments & finance, send translations to a stablecoin with smart contract automation and immutable audit trails.',
+    desc: 'Continuous fairness monitoring with statistical parity checks, disparate impact analysis, and full dataset provenance tracking. Detect bias before regulators do.',
     color: '#16b5ec',
     glowColor: 'rgba(22,181,236,0.25)',
     borderColor: 'rgba(22,181,236,0.28)',
@@ -207,7 +207,7 @@ const CARDS = [
     id: 'markets',
     Icon: MarketsIcon,
     titleKey: 'bento_markets',
-    desc: 'A marketplace terminal with multi-currency display, supply chain animation, and legal compliance for 195+ countries.',
+    desc: 'Automated risk tier classification (Minimal, Limited, High, Unacceptable) with live compliance dashboards. Map your AI systems to EU AI Act requirements in real-time with zero manual overhead.',
     color: '#76fbd3',
     glowColor: 'rgba(118,251,211,0.25)',
     borderColor: 'rgba(118,251,211,0.28)',
@@ -275,61 +275,29 @@ function BentoCard({ card, onOpenDive, index }) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      {/* Inner glow overlays */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(ellipse at top left, ${card.color}0d 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.6,
-          borderRadius: '1rem',
-        }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(ellipse at bottom right, ${card.color}08 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.4,
-          borderRadius: '1rem',
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ background: `radial-gradient(ellipse at top left, ${card.color}0d 0%, transparent 60%)`, opacity: hovered ? 1 : 0.6, borderRadius: '1rem' }} />
+      <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ background: `radial-gradient(ellipse at bottom right, ${card.color}08 0%, transparent 60%)`, opacity: hovered ? 1 : 0.4, borderRadius: '1rem' }} />
 
-      {/* Scan line on hover */}
       {hovered && (
-        <motion.div
-          className="absolute left-0 right-0 h-px pointer-events-none z-10"
-          style={{ background: `linear-gradient(90deg, transparent, ${card.color}50, transparent)` }}
-          initial={{ top: '0%' }}
-          animate={{ top: '100%' }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
-        />
+        <motion.div className="absolute left-0 right-0 h-px pointer-events-none z-10" style={{ background: `linear-gradient(90deg, transparent, ${card.color}50, transparent)` }} initial={{ top: '0%' }} animate={{ top: '100%' }} transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }} />
       )}
 
-      {/* Content layout: text left, icon right */}
-      <div className="relative flex items-start justify-between p-6 gap-2">
-        {/* Left: text content */}
-        <div className="flex-1 min-w-0">
-          <h3
-            className="font-orbitron font-bold text-sm mb-2 leading-tight uppercase"
-            style={{ color: 'rgba(226,232,240,0.95)', letterSpacing: '0.03em' }}
-          >
+      <div className="relative flex items-start justify-between pt-12 pl-10 pr-10 pb-10 gap-4">
+        <div className="flex-1 min-w-0 pt-2 pl-2">
+          <h3 className="font-orbitron font-bold text-sm mb-3 leading-tight uppercase" style={{ color: 'rgba(226,232,240,0.95)', letterSpacing: '0.03em' }}>
             {t(card.titleKey)}
           </h3>
-          <p
-            className="text-xs leading-relaxed mb-5"
-            style={{ color: 'rgba(226,232,240,0.45)', maxWidth: '190px' }}
-          >
+          <p className="text-xs leading-relaxed mb-6" style={{ color: 'rgba(226,232,240,0.45)', maxWidth: '200px' }}>
             {card.desc}
           </p>
 
           <motion.button
-            onClick={() => onOpenDive(card.id)}
-            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full transition-all"
-            style={{
-              color: card.color,
-              background: `${card.color}12`,
-              border: `1px solid ${card.color}35`,
-              boxShadow: hovered ? `0 0 14px ${card.color}30` : 'none',
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDive(card.id);
             }}
+            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full transition-all"
+            style={{ color: card.color, background: `${card.color}12`, border: `1px solid ${card.color}35`, boxShadow: hovered ? `0 0 14px ${card.color}30` : 'none' }}
             whileHover={{ x: 2, scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
@@ -337,107 +305,55 @@ function BentoCard({ card, onOpenDive, index }) {
           </motion.button>
         </div>
 
-        {/* Right: holographic illustration */}
-        <motion.div
-          className="shrink-0 flex items-center justify-center"
-          animate={{
-            filter: hovered
-              ? `drop-shadow(0 0 18px ${card.color}80) drop-shadow(0 0 36px ${card.color}40)`
-              : `drop-shadow(0 0 8px ${card.color}40)`,
-            scale: hovered ? 1.06 : 1,
-          }}
-          transition={{ duration: 0.4 }}
-        >
+        <motion.div className="shrink-0 flex items-center justify-center" animate={{ filter: hovered ? `drop-shadow(0 0 18px ${card.color}80) drop-shadow(0 0 36px ${card.color}40)` : `drop-shadow(0 0 8px ${card.color}40)`, scale: hovered ? 1.06 : 1 }} transition={{ duration: 0.4 }}>
           <Icon />
         </motion.div>
       </div>
 
-      {/* Bottom glow strip */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-px pointer-events-none transition-opacity duration-300"
-        style={{
-          background: `linear-gradient(90deg, transparent, ${card.color}55, transparent)`,
-          opacity: hovered ? 1 : 0.35,
-        }}
-      />
-
-      {/* Corner accent */}
-      <div
-        className="absolute top-0 right-0 w-24 h-24 pointer-events-none transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(circle at top right, ${card.color}18, transparent 70%)`,
-          opacity: hovered ? 1 : 0.4,
-        }}
-      />
+      <div className="absolute bottom-0 left-0 right-0 h-px pointer-events-none transition-opacity duration-300" style={{ background: `linear-gradient(90deg, transparent, ${card.color}55, transparent)`, opacity: hovered ? 1 : 0.35 }} />
+      <div className="absolute top-0 right-0 w-24 h-24 pointer-events-none transition-opacity duration-300" style={{ background: `radial-gradient(circle at top right, ${card.color}18, transparent 70%)`, opacity: hovered ? 1 : 0.4 }} />
     </motion.div>
   );
 }
 
 export default function BentoGrid() {
-  const { activeBentoModal, setActiveBentoModal, t } = useApp();
+  const { activeBentoModal, setActiveBentoModal } = useApp();
 
   return (
-    <section className="py-16 px-4 max-w-7xl mx-auto">
-      {/* Section header */}
-      <motion.div
-        className="text-center mb-10"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-      >
-        <div
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-medium"
-          style={{
-            background: 'rgba(118,251,211,0.07)',
-            border: '1px solid rgba(118,251,211,0.2)',
-            color: '#76fbd3',
-          }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full animate-pulse"
-            style={{ background: '#76fbd3', boxShadow: '0 0 6px #76fbd3' }}
-          />
-          Core Platform Features
+    <div className="w-full flex justify-center overflow-hidden">
+      <section className="py-16 px-4 md:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div className="text-center mb-10" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-medium" style={{ background: 'rgba(118,251,211,0.07)', border: '1px solid rgba(118,251,211,0.2)', color: '#76fbd3' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#76fbd3', boxShadow: '0 0 6px #76fbd3' }} />
+              Core Infrastructure Capabilities
+            </div>
+            <h2 className="font-orbitron font-black text-2xl md:text-3xl mb-3">
+              <span style={{ color: '#e2e8f0' }}>REGTECH </span>
+              <span className="gradient-text">INFRASTRUCTURE</span>
+            </h2>
+            <p className="text-sm max-w-lg mx-auto" style={{ color: 'rgba(226,232,240,0.45)' }}>
+              Production-grade AI governance engineered for compliance-first engineering teams.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            {CARDS.map((card, i) => (
+              <BentoCard
+                key={card.id}
+                card={card}
+                index={i}
+                onOpenDive={(id) => setActiveBentoModal(id)}
+              />
+            ))}
+          </div>
+
+          <UnifiedNetworkDive isOpen={activeBentoModal === 'network'} onClose={() => setActiveBentoModal(null)} />
+          <SecurePaymentsDive isOpen={activeBentoModal === 'payments'} onClose={() => setActiveBentoModal(null)} />
+          <InternationalMarketsDive isOpen={activeBentoModal === 'markets'} onClose={() => setActiveBentoModal(null)} />
+          <VirtualHQDive isOpen={activeBentoModal === 'hq'} onClose={() => setActiveBentoModal(null)} />
         </div>
-        <h2 className="font-orbitron font-black text-2xl md:text-3xl mb-3">
-          <span style={{ color: '#e2e8f0' }}>PLATFORM </span>
-          <span className="gradient-text">CAPABILITIES</span>
-        </h2>
-        <p className="text-sm max-w-lg mx-auto" style={{ color: 'rgba(226,232,240,0.45)' }}>
-          Everything you need to operate globally — unified in one intelligent interface.
-        </p>
-      </motion.div>
-
-      {/* 2×2 Bento Grid */}
-      <div className="bento-grid-2x2">
-        {CARDS.map((card, i) => (
-          <BentoCard
-            key={card.id}
-            card={card}
-            index={i}
-            onOpenDive={(id) => setActiveBentoModal(id)}
-          />
-        ))}
-      </div>
-
-      {/* Deep-dive modals */}
-      <UnifiedNetworkDive
-        open={activeBentoModal === 'network'}
-        onClose={() => setActiveBentoModal(null)}
-      />
-      <SecurePaymentsDive
-        open={activeBentoModal === 'payments'}
-        onClose={() => setActiveBentoModal(null)}
-      />
-      <InternationalMarketsDive
-        open={activeBentoModal === 'markets'}
-        onClose={() => setActiveBentoModal(null)}
-      />
-      <VirtualHQDive
-        open={activeBentoModal === 'hq'}
-        onClose={() => setActiveBentoModal(null)}
-      />
-    </section>
+      </section>
+    </div>
   );
 }

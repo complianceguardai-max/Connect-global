@@ -17,14 +17,14 @@ export const TRANSLATIONS = {
     nav_talent: 'International Talent',
     nav_knowledge: 'Knowledge Sharing',
     nav_resources: 'Resources',
-    hero_title_1: 'GLOBAL ACCESS.',
-    hero_title_2: 'ONE INTERFACE.',
-    hero_subtitle: 'Unified cross-border services, resources, and commerce for everyone, everywhere. Intuitively connecting you with a world of opportunities.',
-    hero_cta: 'START GLOBAL JOURNEY',
-    hero_connect: 'CONNECT NOW',
-    bento_network: 'Unified Global Network',
-    bento_payments: 'Secure Payments & Finance',
-    bento_markets: 'Access International Markets',
+    hero_title_1: 'EU AI ACT COMPLIANCE.',
+    hero_title_2: 'ZERO DEPLOYMENT FRICTION.',
+    hero_subtitle: 'Enterprise-grade AI governance infrastructure for CTOs. Ship ML models to production with immutable audit trails, automated bias detection, and real-time risk classification—protecting deployment velocity without risking the €35M fine.',
+    hero_cta: 'SCHEDULE TECHNICAL DEMO',
+    hero_connect: 'REQUEST API ACCESS',
+    bento_network: 'Immutable Model Logging & Audit Trails',
+    bento_payments: 'Automated Bias Detection & Dataset Lineage',
+    bento_markets: 'Real-time EU AI Act Risk Classification',
     bento_hq: 'Real-Time Collaboration',
     run_more: 'Run more →',
     stats_title: 'Real-Time Global Statistics',
@@ -130,6 +130,8 @@ export function AppProvider({ children }) {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [selectedCity, setSelectedCity] = useState(null);
   const [language, setLanguage] = useState('en');
+  const [toasts, setToasts] = useState([]);
+  const [infoModal, setInfoModal] = useState(null);
 
   const t = useCallback((key) => {
     return TRANSLATIONS[language]?.[key] || TRANSLATIONS.en[key] || key;
@@ -140,11 +142,29 @@ export function AppProvider({ children }) {
     setActiveBentoModal(null);
     setShowOnboarding(false);
     setSelectedCity(null);
+    setInfoModal(null);
   }, []);
 
   const openOnboarding = useCallback(() => {
     setOnboardingStep(0);
     setShowOnboarding(true);
+  }, []);
+
+  const addToast = useCallback((message, type = 'info', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const openInfoModal = useCallback((contentKey) => {
+    setInfoModal(contentKey);
+  }, []);
+
+  const closeInfoModal = useCallback(() => {
+    setInfoModal(null);
   }, []);
 
   return (
@@ -155,6 +175,8 @@ export function AppProvider({ children }) {
       onboardingStep, setOnboardingStep,
       selectedCity, setSelectedCity,
       language, setLanguage,
+      toasts, addToast, removeToast,
+      infoModal, openInfoModal, closeInfoModal,
       t,
       closeAllModals,
       dir: LANGUAGES[language]?.dir || 'ltr',

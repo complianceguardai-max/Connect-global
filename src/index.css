@@ -34,6 +34,8 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -43,6 +45,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+#root {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Scrollbar */
@@ -381,11 +390,89 @@ body {
   white-space: nowrap;
 }
 
+/* Modal backdrop */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 /* Responsive modal */
 @media (max-width: 768px) {
   .modal-content {
     margin: 0;
     border-radius: 16px 16px 0 0;
     max-height: 90vh;
+  }
+  
+  .modal-backdrop {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Mobile: Reduce backdrop-filter blur to prevent GPU overload */
+@media (max-width: 768px) {
+  /* Disable heavy blur effects on mobile for performance */
+  .glass,
+  .glass-blue,
+  .glass-dark {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  /* Use solid backgrounds for tooltips/modals on mobile */
+  .mobile-solid-bg {
+    background: rgba(10, 22, 40, 0.95) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Optimize pill buttons */
+  .pill-btn-primary,
+  .pill-btn-secondary {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  /* Ensure proper padding on all sections */
+  section {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Prevent horizontal overflow */
+  * {
+    max-width: 100vw;
+  }
+  
+  /* Optimize animations for mobile */
+  * {
+    will-change: auto !important;
+  }
+  
+  /* Reduce motion for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .glass,
+  .glass-blue,
+  .glass-dark {
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
   }
 }

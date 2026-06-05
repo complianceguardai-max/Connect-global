@@ -14,6 +14,14 @@ const DATA_CENTERS = [
   { id: 'dc8', name: 'Frankfurt DC-8', region: 'EU', load: 91, status: 'warning', latency: '6ms', uptime: '99.94%', x: 51, y: 28 },
 ];
 
+// Key cities with their approximate positions on the map (percentage-based)
+const KEY_CITIES = [
+  { id: 'london', name: 'London', x: 49.5, y: 28, load: 58, status: 'online', latency: '5ms' },
+  { id: 'dubai', name: 'Dubai', x: 62, y: 42, load: 72, status: 'online', latency: '8ms' },
+  { id: 'tokyo', name: 'Tokyo', x: 80, y: 35, load: 45, status: 'online', latency: '6ms' },
+  { id: 'newyork', name: 'New York', x: 26, y: 32, load: 84, status: 'warning', latency: '4ms' },
+];
+
 const STATUS_ICON = {
   online: <CheckCircle size={12} />,
   warning: <AlertCircle size={12} />,
@@ -27,7 +35,8 @@ const STATUS_CLASS = {
 };
 
 export default function UnifiedNetworkDive({ isOpen, onClose }) {
-  const [selectedDC, setSelectedDC] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [hoveredCity, setHoveredCity] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
 
   const totalLoad = Math.round(DATA_CENTERS.reduce((a, d) => a + d.load, 0) / DATA_CENTERS.length);
@@ -63,62 +72,206 @@ export default function UnifiedNetworkDive({ isOpen, onClose }) {
             ))}
           </div>
 
-          {/* Dot grid map */}
-          <div className="rounded-xl p-4 relative overflow-hidden" style={{ background: 'rgba(5,10,20,0.8)', border: '1px solid rgba(118,251,211,0.1)', minHeight: 220 }}>
-            <svg viewBox="0 0 100 60" className="w-full" style={{ height: 200 }}>
-              {/* Grid dots */}
-              {Array.from({ length: 20 }, (_, row) =>
-                Array.from({ length: 34 }, (_, col) => (
-                  <circle key={`${row}-${col}`} cx={col * 3 + 1} cy={row * 3 + 1} r="0.4"
-                    fill="rgba(118,251,211,0.15)" />
-                ))
-              )}
-              {/* Connection lines */}
-              {DATA_CENTERS.slice(0, 6).map((dc, i) => {
-                const next = DATA_CENTERS[(i + 1) % 6];
-                return (
-                  <motion.line key={dc.id}
-                    x1={dc.x * 0.1} y1={dc.y * 0.12}
-                    x2={next.x * 0.1} y2={next.y * 0.12}
-                    stroke="rgba(22,181,236,0.3)" strokeWidth="0.3"
-                    initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-                    transition={{ duration: 1.5, delay: i * 0.2 }}
-                  />
-                );
-              })}
-              {/* DC nodes */}
-              {DATA_CENTERS.map((dc, i) => (
-                <g key={dc.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedDC(selectedDC?.id === dc.id ? null : dc)}>
-                  <motion.circle cx={dc.x * 0.1} cy={dc.y * 0.12} r="2.5"
-                    fill={dc.status === 'online' ? '#76fbd3' : '#fbbf24'}
-                    opacity="0.9"
-                    animate={{ r: [2.5, 3.2, 2.5] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                  />
-                  <circle cx={dc.x * 0.1} cy={dc.y * 0.12} r="4"
-                    fill="none" stroke={dc.status === 'online' ? 'rgba(118,251,211,0.3)' : 'rgba(251,191,36,0.3)'} strokeWidth="0.5" />
-                  <text x={dc.x * 0.1} y={dc.y * 0.12 - 5} textAnchor="middle" fontSize="2.5"
-                    fill="rgba(226,232,240,0.7)" fontFamily="Orbitron">{dc.region}</text>
-                </g>
-              ))}
-            </svg>
+          {/* Interactive World Map with Image Background */}
+          <div 
+            className="rounded-xl relative overflow-hidden" 
+            style={{ 
+              background: 'rgba(5,10,20,0.8)', 
+              border: '1px solid rgba(118,251,211,0.1)', 
+              minHeight: 400,
+              backgroundImage: 'url(/map-bg.png.jpeg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            {/* Dark overlay for better contrast */}
+            <div 
+              className="absolute inset-0 pointer-events-none" 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(5,10,20,0.75) 0%, rgba(5,10,20,0.65) 100%)',
+                mixBlendMode: 'multiply'
+              }} 
+            />
 
-            {/* Selected DC info */}
-            {selectedDC && (
-              <motion.div className="absolute bottom-3 right-3 rounded-lg p-3 w-48"
-                style={{ background: 'rgba(5,10,20,0.97)', border: '1px solid rgba(118,251,211,0.25)' }}
-                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                <p className="text-xs font-bold mb-2" style={{ color: '#76fbd3' }}>{selectedDC.name}</p>
-                {[
-                  { label: 'Load', value: `${selectedDC.load}%` },
-                  { label: 'Latency', value: selectedDC.latency },
-                  { label: 'Uptime', value: selectedDC.uptime },
-                ].map(s => (
-                  <div key={s.label} className="flex justify-between text-xs mb-1">
-                    <span style={{ color: 'rgba(226,232,240,0.4)' }}>{s.label}</span>
-                    <span style={{ color: 'rgba(226,232,240,0.8)' }}>{s.value}</span>
+            {/* Interactive layer with city nodes */}
+            <div className="absolute inset-0 p-4" style={{ minHeight: 400 }}>
+              {KEY_CITIES.map((city, i) => (
+                <div
+                  key={city.id}
+                  className="absolute"
+                  style={{
+                    left: `${city.x}%`,
+                    top: `${city.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    cursor: 'pointer',
+                    zIndex: hoveredCity === city.id ? 20 : 10,
+                  }}
+                  onMouseEnter={() => setHoveredCity(city.id)}
+                  onMouseLeave={() => setHoveredCity(null)}
+                  onClick={() => setSelectedCity(selectedCity?.id === city.id ? null : city)}
+                >
+                  {/* Outer pulse ring */}
+                  <motion.div
+                    className="absolute"
+                    style={{
+                      width: 60,
+                      height: 60,
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%',
+                      border: `2px solid ${city.status === 'online' ? 'rgba(118,251,211,0.3)' : 'rgba(251,191,36,0.3)'}`,
+                      pointerEvents: 'none',
+                    }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 0, 0.5],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      delay: i * 0.5,
+                    }}
+                  />
+
+                  {/* Middle ring */}
+                  <div
+                    className="absolute"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      borderRadius: '50%',
+                      border: `2px solid ${city.status === 'online' ? 'rgba(118,251,211,0.4)' : 'rgba(251,191,36,0.4)'}`,
+                      pointerEvents: 'none',
+                    }}
+                  />
+
+                  {/* Core glowing node */}
+                  <motion.div
+                    className="relative"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: city.status === 'online' ? '#76fbd3' : '#fbbf24',
+                      boxShadow: `0 0 20px ${city.status === 'online' ? 'rgba(118,251,211,0.8)' : 'rgba(251,191,36,0.8)'}, 0 0 40px ${city.status === 'online' ? 'rgba(118,251,211,0.4)' : 'rgba(251,191,36,0.4)'}`,
+                    }}
+                    animate={{
+                      scale: hoveredCity === city.id ? 1.3 : 1,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+
+                  {/* City name label (always visible on hover) */}
+                  {hoveredCity === city.id && (
+                    <motion.div
+                      className="absolute whitespace-nowrap"
+                      style={{
+                        left: '50%',
+                        top: -35,
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(5,10,20,0.95)',
+                        border: '1px solid rgba(118,251,211,0.3)',
+                        borderRadius: '8px',
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#76fbd3',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        pointerEvents: 'none',
+                      }}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {city.name}
+                    </motion.div>
+                  )}
+                </div>
+              ))}
+
+              {/* Connection lines between cities */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minHeight: 400 }}>
+                {KEY_CITIES.slice(0, 3).map((city, i) => {
+                  const next = KEY_CITIES[(i + 1) % 4];
+                  return (
+                    <motion.line
+                      key={`line-${city.id}`}
+                      x1={`${city.x}%`}
+                      y1={`${city.y}%`}
+                      x2={`${next.x}%`}
+                      y2={`${next.y}%`}
+                      stroke="rgba(22,181,236,0.3)"
+                      strokeWidth="2"
+                      strokeDasharray="8 8"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 0.6 }}
+                      transition={{ duration: 2, delay: i * 0.4 }}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* Selected city data panel */}
+            {selectedCity && (
+              <motion.div
+                className="absolute bottom-4 right-4 rounded-xl p-4 w-64"
+                style={{
+                  background: 'rgba(5,10,20,0.97)',
+                  border: '1px solid rgba(118,251,211,0.3)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(12px)',
+                }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold font-orbitron" style={{ color: '#76fbd3' }}>
+                    {selectedCity.name} Hub
+                  </h4>
+                  <span
+                    className={`${STATUS_CLASS[selectedCity.status]} px-2 py-0.5 rounded-full text-xs flex items-center gap-1`}
+                  >
+                    {STATUS_ICON[selectedCity.status]} {selectedCity.status}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span style={{ color: 'rgba(226,232,240,0.5)' }}>Load</span>
+                    <span style={{ color: selectedCity.load > 80 ? '#fbbf24' : '#76fbd3', fontWeight: '600' }}>
+                      {selectedCity.load}%
+                    </span>
                   </div>
-                ))}
+                  <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{
+                        background: selectedCity.load > 80 ? '#fbbf24' : 'linear-gradient(90deg, #76fbd3, #16b5ec)',
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${selectedCity.load}%` }}
+                      transition={{ duration: 0.8 }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span style={{ color: 'rgba(226,232,240,0.5)' }}>Latency</span>
+                    <span style={{ color: 'rgba(226,232,240,0.85)', fontFamily: 'monospace' }}>
+                      {selectedCity.latency}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span style={{ color: 'rgba(226,232,240,0.5)' }}>Active Connections</span>
+                    <span style={{ color: '#16b5ec', fontWeight: '600' }}>
+                      {Math.floor(Math.random() * 500 + 200)}
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             )}
           </div>

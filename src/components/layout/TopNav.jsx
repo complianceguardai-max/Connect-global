@@ -1,112 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe2, Menu, X, Wifi, User, ChevronDown } from 'lucide-react';
-import { useApp, LANGUAGES } from '../../context/AppContext';
+import { Globe2, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const NAV_ITEMS = [
-  { key: 'commerce',  labelKey: 'nav_commerce',  sub: 'Multilingual' },
-  { key: 'defi',      labelKey: 'nav_defi',       sub: 'Hints' },
-  { key: 'talent',    labelKey: 'nav_talent',      sub: 'Secondary' },
-  { key: 'knowledge', labelKey: 'nav_knowledge',   sub: 'Hint' },
+  { key: 'capabilities', label: 'Capabilities', sub: 'Core Engine' },
+  { key: 'risk',         label: 'Risk Tiers',   sub: 'EU AI Act' },
+  { key: 'remediation',  label: 'Remediation',  sub: 'Blueprints' },
+  { key: 'export',       label: 'Audit PDF',    sub: 'Secure Export' },
 ];
-
-/* Connection status languages shown in top-right dropdown */
-const CONNECTION_LANGS = [
-  { code: 'ar', label: 'Arabic',  flag: '🇦🇪' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'fr', label: 'French',  flag: '🇫🇷' },
-  { code: 'zh', label: 'Chinese', flag: '🇨🇳' },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸' },
-];
-
-function ConnectionStatusBlock({ language, setLanguage }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      {/* Trigger row: globe + wifi + user icons */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all duration-200"
-        style={{
-          background: open ? 'rgba(118,251,211,0.12)' : 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(118,251,211,0.22)',
-          boxShadow: open ? '0 0 16px rgba(118,251,211,0.2)' : 'none',
-        }}
-      >
-        <Globe2 size={14} style={{ color: '#76fbd3' }} />
-        <Wifi size={13} style={{ color: '#16b5ec' }} />
-        <User size={13} style={{ color: 'rgba(226,232,240,0.6)' }} />
-        <ChevronDown
-          size={11}
-          style={{ color: 'rgba(118,251,211,0.6)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-        />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="absolute right-0 top-full mt-2 w-48 rounded-2xl overflow-hidden z-50"
-            style={{
-              background: 'rgba(4,8,18,0.97)',
-              border: '1px solid rgba(118,251,211,0.22)',
-              boxShadow: '0 0 40px rgba(118,251,211,0.15), 0 20px 40px rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-            }}
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-          >
-            {/* Header */}
-            <div
-              className="px-4 py-2.5 flex items-center gap-2"
-              style={{ borderBottom: '1px solid rgba(118,251,211,0.1)' }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ background: '#76fbd3', boxShadow: '0 0 6px #76fbd3' }}
-              />
-              <span className="text-xs font-medium" style={{ color: 'rgba(118,251,211,0.8)' }}>
-                Connected
-              </span>
-            </div>
-
-            {/* Language list */}
-            {CONNECTION_LANGS.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => { setLanguage(lang.code); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-150 text-left"
-                style={{
-                  background: language === lang.code ? 'rgba(118,251,211,0.1)' : 'transparent',
-                  color: language === lang.code ? '#76fbd3' : 'rgba(226,232,240,0.75)',
-                  borderBottom: '1px solid rgba(118,251,211,0.05)',
-                }}
-                onMouseEnter={e => { if (language !== lang.code) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                onMouseLeave={e => { if (language !== lang.code) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <span className="text-base">{lang.flag}</span>
-                <span className="font-medium text-xs">{lang.label}</span>
-                {language === lang.code && (
-                  <span className="ml-auto text-xs" style={{ color: '#76fbd3' }}>✓</span>
-                )}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function NavLink({ label, sub, onClick }) {
   const [hovered, setHovered] = useState(false);
@@ -137,7 +41,10 @@ function NavLink({ label, sub, onClick }) {
 }
 
 export default function TopNav() {
-  const { setActiveNavModal, openOnboarding, t, language, setLanguage } = useApp();
+  const { setActiveNavModal, openOnboarding, addToast } = useApp();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -146,6 +53,21 @@ export default function TopNav() {
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      addToast('Error signing out', 'error');
+    } else {
+      addToast('Signed out successfully', 'success');
+      navigate('/');
+    }
+  };
+
+  // Don't show TopNav on auth or dashboard pages
+  if (location.pathname === '/auth' || location.pathname === '/dashboard') {
+    return null;
+  }
 
   return (
     <>
@@ -167,7 +89,7 @@ export default function TopNav() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4" style={{ width: '100%', maxWidth: '100%' }}>
 
           {/* ── Logo ── */}
           <motion.div
@@ -185,8 +107,8 @@ export default function TopNav() {
               <Globe2 size={18} style={{ color: '#76fbd3' }} />
             </div>
             <span className="font-orbitron text-base font-bold">
-              <span style={{ color: '#e2e8f0' }}>Connect</span>
-              <span style={{ color: '#76fbd3', textShadow: '0 0 12px rgba(118,251,211,0.5)' }}>Global</span>
+              <span style={{ color: '#e2e8f0' }}>Compliance</span>
+              <span style={{ color: '#76fbd3', textShadow: '0 0 12px rgba(118,251,211,0.5)' }}>Guard</span>
             </span>
           </motion.div>
 
@@ -195,33 +117,101 @@ export default function TopNav() {
             {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.key}
-                label={t(item.labelKey)}
+                label={item.label}
                 sub={item.sub}
                 onClick={() => setActiveNavModal(item.key)}
               />
             ))}
-            <NavLink label={t('nav_resources')} sub="" onClick={() => {}} />
+            <NavLink
+              label="Resources"
+              sub=""
+              onClick={() => {
+                const element = document.getElementById('security-partners');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
+            />
           </div>
 
           {/* ── Right Controls ── */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
-            {/* Connection status block with flags */}
-            <div className="hidden md:block">
-              <ConnectionStatusBlock language={language} setLanguage={setLanguage} />
-            </div>
+            {/* Conditional Auth Buttons */}
+            {user ? (
+              <>
+                {/* Dashboard Button */}
+                <motion.button
+                  onClick={() => navigate('/dashboard')}
+                  className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all duration-200"
+                  style={{
+                    background: 'rgba(118,251,211,0.1)',
+                    border: '1px solid rgba(118,251,211,0.3)',
+                    color: '#76fbd3',
+                  }}
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: '0 0 20px rgba(118,251,211,0.3)',
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <LayoutDashboard size={16} />
+                  DASHBOARD
+                </motion.button>
 
-            {/* Pill CTA button */}
-            <motion.button
-              onClick={openOnboarding}
-              className="hidden md:flex items-center gap-2 font-orbitron text-xs font-bold tracking-wider pill-btn-primary"
-              whileHover={{
-                scale: 1.04,
-                boxShadow: '0 0 32px rgba(118,251,211,0.5)',
-              }}
-              whileTap={{ scale: 0.97 }}
-            >
-              START GLOBAL JOURNEY
-            </motion.button>
+                {/* Logout Button */}
+                <motion.button
+                  onClick={handleSignOut}
+                  className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all duration-200"
+                  style={{
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#fca5a5',
+                  }}
+                  whileHover={{
+                    scale: 1.04,
+                    background: 'rgba(239,68,68,0.15)',
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <LogOut size={16} />
+                  LOGOUT
+                </motion.button>
+              </>
+            ) : (
+              <>
+                {/* Login Button */}
+                <motion.button
+                  onClick={() => navigate('/auth')}
+                  className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all duration-200"
+                  style={{
+                    background: 'rgba(118,251,211,0.08)',
+                    border: '1px solid rgba(118,251,211,0.25)',
+                    color: '#76fbd3',
+                  }}
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: '0 0 20px rgba(118,251,211,0.25)',
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <User size={16} />
+                  LOGIN
+                </motion.button>
+
+                {/* Get Started Button */}
+                <motion.button
+                  onClick={openOnboarding}
+                  className="hidden md:flex items-center gap-2 font-orbitron text-xs font-bold tracking-wider pill-btn-primary"
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: '0 0 32px rgba(118,251,211,0.5)',
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  GET STARTED
+                </motion.button>
+              </>
+            )}
 
             {/* Mobile toggle */}
             <button
@@ -261,7 +251,7 @@ export default function TopNav() {
                     border: '1px solid rgba(118,251,211,0.1)',
                   }}
                 >
-                  <span className="uppercase text-xs font-semibold tracking-wide">{t(item.labelKey)}</span>
+                  <span className="uppercase text-xs font-semibold tracking-wide">{item.label}</span>
                   {item.sub && (
                     <span className="block text-xs mt-0.5" style={{ color: 'rgba(118,251,211,0.45)' }}>
                       ⊕ {item.sub}
@@ -269,14 +259,58 @@ export default function TopNav() {
                   )}
                 </button>
               ))}
-              <div className="pt-2 flex items-center gap-3">
-                <ConnectionStatusBlock language={language} setLanguage={setLanguage} />
-                <button
-                  onClick={() => { openOnboarding(); setMobileOpen(false); }}
-                  className="flex-1 py-3 rounded-full font-orbitron text-xs font-bold tracking-wider pill-btn-primary"
-                >
-                  START GLOBAL JOURNEY
-                </button>
+              <div className="pt-2 flex flex-col gap-2">
+                
+                {/* Mobile Auth Buttons */}
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => { navigate('/dashboard'); setMobileOpen(false); }}
+                      className="w-full py-3 rounded-xl font-orbitron text-xs font-bold tracking-wider flex items-center justify-center gap-2"
+                      style={{
+                        background: 'rgba(118,251,211,0.1)',
+                        border: '1px solid rgba(118,251,211,0.3)',
+                        color: '#76fbd3',
+                      }}
+                    >
+                      <LayoutDashboard size={16} />
+                      DASHBOARD
+                    </button>
+                    <button
+                      onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                      className="w-full py-3 rounded-xl font-orbitron text-xs font-bold tracking-wider flex items-center justify-center gap-2"
+                      style={{
+                        background: 'rgba(239,68,68,0.1)',
+                        border: '1px solid rgba(239,68,68,0.3)',
+                        color: '#fca5a5',
+                      }}
+                    >
+                      <LogOut size={16} />
+                      LOGOUT
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { navigate('/auth'); setMobileOpen(false); }}
+                      className="w-full py-3 rounded-xl font-orbitron text-xs font-bold tracking-wider flex items-center justify-center gap-2"
+                      style={{
+                        background: 'rgba(118,251,211,0.08)',
+                        border: '1px solid rgba(118,251,211,0.25)',
+                        color: '#76fbd3',
+                      }}
+                    >
+                      <User size={16} />
+                      LOGIN
+                    </button>
+                    <button
+                      onClick={() => { openOnboarding(); setMobileOpen(false); }}
+                      className="w-full py-3 rounded-full font-orbitron text-xs font-bold tracking-wider pill-btn-primary"
+                    >
+                      GET STARTED
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

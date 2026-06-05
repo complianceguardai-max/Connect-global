@@ -53,10 +53,10 @@ export default function ModalOverlay({ isOpen, onClose, title, subtitle, childre
               border: `1px solid ${accentColor}30`,
               boxShadow: accentGlow,
             }}
-            initial={{ opacity: 0, y: 60, scale: 0.95 }}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.97 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            exit={{ opacity: 0, y: 10, scale: 0.99 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
           >
             {/* Header */}
             <div

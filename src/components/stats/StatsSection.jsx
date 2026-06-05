@@ -108,10 +108,11 @@ export default function StatsSection() {
   const { t } = useApp();
 
   return (
-    <section
-      className="py-16 px-4"
-      style={{ background: 'rgba(10,22,40,0.98)', borderTop: '1px solid rgba(118,251,211,0.12)' }}
-    >
+    <div className="w-full flex justify-center overflow-hidden">
+      <section
+        className="py-16 px-4 md:px-6 lg:px-8"
+        style={{ background: 'rgba(10,22,40,0.98)', borderTop: '1px solid rgba(118,251,211,0.12)' }}
+      >
       <div className="max-w-7xl mx-auto">
 
         {/* Section header */}
@@ -366,7 +367,8 @@ export default function StatsSection() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
