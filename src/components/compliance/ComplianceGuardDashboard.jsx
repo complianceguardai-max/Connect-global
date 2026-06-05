@@ -238,8 +238,8 @@ export default function ComplianceGuardDashboard() {
   };
 
   return (
-    <div className="w-full min-h-screen overflow-x-hidden flex flex-col items-center relative">
-      <section className="py-12 px-4 md:px-6 lg:px-8 w-full z-10" style={{ background: 'rgba(10,22,40,0.98)' }}>
+    <div className="w-full min-h-screen overflow-x-hidden flex flex-col items-center relative bg-[#08111e]">
+      <section className="py-12 px-4 md:px-6 lg:px-8 w-full z-10" style={{ background: '#0a1628' }}>
         <div className="max-w-7xl mx-auto w-full block">
           
           <motion.div className="text-center mb-10 w-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
