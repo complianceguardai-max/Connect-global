@@ -72,8 +72,8 @@ export default function ComplianceGuardDashboard() {
         .insert([
           {
             user_id: currentUser.id,
-            model_name: modelName,
-            industry: industryFocus,
+            model_name: modelName || 'System Internal',
+            industry: industryFocus || 'Global',
             risk_tier: AI_RISK_TIERS.HIGH,
             compliance_status: false,
             summary: 'CRITICAL VULNERABILITY DETECTED: System flags massive exposure to EU AI Act compliance fines (Up to €35M). Lacks automated audit trails, real-time bias logging, and human-in-the-loop control systems.',
@@ -207,7 +207,9 @@ export default function ComplianceGuardDashboard() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ConnectGlobal_Compliance_Audit_${modelName.replace(/\s+/g, '_')}.pdf`;
+      // CRITICAL FIX: Safe fallback to prevent App Crash on undefined modelName
+      const safeFileName = modelName ? modelName.replace(/\s+/g, '_') : 'System_Internal';
+      a.download = `ConnectGlobal_Compliance_Audit_${safeFileName}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -307,8 +309,9 @@ export default function ComplianceGuardDashboard() {
                   <option value="">All Vulnerability Levels</option>
                   {Object.values(AI_RISK_TIERS).map(tier => <option key={tier} value={tier}>{tier}</option>)}
                 </select>
-                <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap mt-2 sm:mt-0">
-                  <input type="checkbox" checked={showCompliantOnly} onChange={(e) => setShowCompliantOnly(e.target.checked)} className="w-4 h-4 rounded" style={{ accentColor: '#76fbd3' }} />
+                {/* CRITICAL FIX: Removed whitespace-nowrap and added shrink-0 to prevent mobile horizontal scroll */}
+                <label className="flex items-center gap-2 cursor-pointer mt-2 sm:mt-0">
+                  <input type="checkbox" checked={showCompliantOnly} onChange={(e) => setShowCompliantOnly(e.target.checked)} className="w-4 h-4 rounded shrink-0" style={{ accentColor: '#76fbd3' }} />
                   <span className="text-xs font-semibold text-slate-400">Show Compliant Systems Only</span>
                 </label>
               </div>
@@ -361,7 +364,8 @@ export default function ComplianceGuardDashboard() {
 
                       <AnimatePresence>
                         {expandedScanId === scan.id && (
-                          <motion.div className="mt-2 p-4 rounded-xl border border-slate-800 bg-slate-950/60 w-full" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                          {/* CRITICAL FIX: Added overflow-hidden to prevent UI bleeding during height expansion */}
+                          <motion.div className="mt-2 p-4 rounded-xl border border-slate-800 bg-slate-950/60 w-full overflow-hidden" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                             <div className="mb-4">
                               <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
                                 <AlertTriangle size={14} /> Threat Assessment Narrative
@@ -439,10 +443,16 @@ export default function ComplianceGuardDashboard() {
                           </tr>
 
                           <AnimatePresence>
+                            {/* CRITICAL FIX: Added explicit motion.tr with unique key to prevent React/DOM errors and ensure valid exit animations */}
                             {expandedScanId === scan.id && (
-                              <tr>
-                                <td colSpan="6" className="px-6 py-4 bg-slate-950/40">
-                                  <motion.div className="p-5 rounded-xl border border-slate-800 bg-slate-900/30 w-full" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                              <motion.tr
+                                key={`expand-${scan.id}`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                              >
+                                <td colSpan="6" className="p-0 bg-slate-950/40">
+                                  <motion.div className="p-5 m-4 rounded-xl border border-slate-800 bg-slate-900/30" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>
                                     <div className="mb-4">
                                       <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
                                         <AlertTriangle size={14} /> Threat Assessment Narrative
@@ -473,7 +483,7 @@ export default function ComplianceGuardDashboard() {
                                     )}
                                   </motion.div>
                                 </td>
-                              </tr>
+                              </motion.tr>
                             )}
                           </AnimatePresence>
                         </React.Fragment>
