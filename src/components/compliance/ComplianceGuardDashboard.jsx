@@ -8,7 +8,6 @@ import AIScanModal from './AIScanModal';
 import ContactSalesModal from './ContactSalesModal';
 import AiSalesAgent from './AiSalesAgent';
 
-// AI Risk Tiers Constants
 const AI_RISK_TIERS = {
   MINIMAL: 'Minimal Risk',
   LIMITED: 'Limited Risk',
@@ -35,14 +34,12 @@ export default function ComplianceGuardDashboard() {
     try {
       setLoading(true);
       setError(null);
-
       const { data, error: fetchError } = await supabase
         .from('ai_scans')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-
       setScans(data || []);
     } catch (err) {
       console.error('Error fetching scans:', err);
@@ -64,7 +61,6 @@ export default function ComplianceGuardDashboard() {
 
     try {
       const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-      
       if (authError || !currentUser) {
         addToast('Authentication error. Please log in.', 'error');
         setIsScanning(false);
@@ -103,25 +99,19 @@ export default function ComplianceGuardDashboard() {
         .single();
 
       if (insertError) {
-        console.error('Supabase insert error:', insertError);
         addToast(`Scan generation failed: ${insertError.message}`, 'error');
         setIsScanning(false);
         return;
       }
 
       setScans((prev) => [{ ...data, isNew: true, isEvaluating: true }, ...prev]);
-      
       await new Promise(resolve => setTimeout(resolve, 3500));
 
       try {
         const apiResponse = await fetch(`/api/evaluate-model`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            scan_id: data.id,
-            model_name: modelName,
-            industry: industryFocus,
-          }),
+          body: JSON.stringify({ scan_id: data.id, model_name: modelName, industry: industryFocus }),
           signal: AbortSignal.timeout(30000),
         });
 
@@ -129,11 +119,7 @@ export default function ComplianceGuardDashboard() {
           const result = await apiResponse.json();
           if (result.success && result.updated_scan) {
             setScans((prev) =>
-              prev.map((scan) =>
-                scan.id === data.id
-                  ? { ...scan, ...result.updated_scan, isNew: true, isEvaluating: false }
-                  : scan
-              )
+              prev.map((scan) => scan.id === data.id ? { ...scan, ...result.updated_scan, isNew: true, isEvaluating: false } : scan)
             );
             addToast('AI Compliance Assessment Finalized.', 'success');
             return;
@@ -141,12 +127,7 @@ export default function ComplianceGuardDashboard() {
         }
         throw new Error('API Timeout or fallback triggered');
       } catch (apiError) {
-        console.warn('Using High-Risk Enterprise Fallback configuration:', apiError);
-        setScans((prev) =>
-          prev.map((scan) =>
-            scan.id === data.id ? { ...scan, isEvaluating: false } : scan
-          )
-        );
+        setScans((prev) => prev.map((scan) => scan.id === data.id ? { ...scan, isEvaluating: false } : scan));
       }
     } catch (err) {
       console.error('Scan system error:', err);
@@ -290,8 +271,7 @@ export default function ComplianceGuardDashboard() {
               whileHover={{ scale: 1.05, boxShadow: '0 0 45px rgba(239,68,68,0.4)' }}
               whileTap={{ scale: 0.97 }}
             >
-              <AlertTriangle size={18} />
-Run New AI Scan
+              <AlertTriangle size={18} /> Run New AI Scan
             </motion.button>
           </motion.div>
 
@@ -299,7 +279,7 @@ Run New AI Scan
           <ContactSalesModal isOpen={isContactSalesModalOpen} onClose={() => setIsContactSalesModalOpen(false)} />
 
           {!loading && stats && (
-            <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-4 mb-8 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 w-full">
               {Object.entries(stats).map(([tier, data]) => (
                 <div
                   key={tier}
@@ -350,91 +330,157 @@ Run New AI Scan
             )}
 
             {!loading && filteredScans.length > 0 && (
-              <div className="w-full overflow-x-auto block">
-                <table className="min-w-full text-left table-auto">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-900/40">
-                      <th className="px-6 py-3.5 whitespace-nowrap">Model Identifier</th>
-                      <th className="px-6 py-3.5 whitespace-nowrap">Sector</th>
-                      <th className="px-6 py-3.5 whitespace-nowrap">Risk Vector</th>
-                      <th className="px-6 py-3.5 whitespace-nowrap">Legal Status</th>
-                      <th className="px-6 py-3.5 whitespace-nowrap">Scan Date</th>
-                      <th className="px-6 py-3.5 text-right whitespace-nowrap">Operational Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm text-slate-300">
-                    {filteredScans.map((scan) => (
-                      <React.Fragment key={scan.id}>
-                        <tr className="border-b border-slate-900/60 hover:bg-slate-800/20 transition-all">
-                          <td className="px-6 py-4 font-bold text-slate-100 whitespace-nowrap">{scan.model_name || 'System Internal'}</td>
-                          <td className="px-6 py-4 text-slate-400 text-xs whitespace-nowrap">{scan.industry || 'Global'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full border" style={{ background: getRiskTierColor(scan.risk_tier), borderColor: getRiskTierBorder(scan.risk_tier), color: getRiskTierText(scan.risk_tier) }}>
-                              {scan.risk_tier}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {scan.compliance_status ? (
-                              <span className="text-emerald-400 flex items-center gap-1 text-xs font-semibold"><CheckCircle size={14} /> Clear</span>
-                            ) : (
-                              <span className="text-red-400 flex items-center gap-1 text-xs font-semibold"><AlertTriangle size={14} /> Critical Breach</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">{scan.created_at ? new Date(scan.created_at).toLocaleDateString() : 'N/A'}</td>
-                          <td className="px-6 py-4 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => toggleExpandScan(scan.id)} className="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
-                                {expandedScanId === scan.id ? 'Hide Audit' : 'Review Audit'}
-                              </button>
-                              <button onClick={() => handleDownloadPDF(scan.id, scan.model_name)} className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all">
-                                <Download size={14} />
-                              </button>
+              <div className="w-full">
+                {/* Mobile Card Layout */}
+                <div className="block lg:hidden divide-y divide-slate-800">
+                  {filteredScans.map((scan) => (
+                    <div key={scan.id} className="p-4 bg-slate-900/20 flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-slate-100 text-base">{scan.model_name || 'System Internal'}</span>
+                        <span className="text-xs text-slate-500">{scan.created_at ? new Date(scan.created_at).toLocaleDateString() : 'N/A'}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-slate-400 text-xs bg-slate-800/40 px-2 py-0.5 rounded">Sector: {scan.industry || 'Global'}</span>
+                        <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full border" style={{ background: getRiskTierColor(scan.risk_tier), borderColor: getRiskTierBorder(scan.risk_tier), color: getRiskTierText(scan.risk_tier) }}>
+                          {scan.risk_tier}
+                        </span>
+                        {scan.compliance_status ? (
+                          <span className="text-emerald-400 flex items-center gap-1 text-xs font-semibold"><CheckCircle size={14} /> Clear</span>
+                        ) : (
+                          <span className="text-red-400 flex items-center gap-1 text-xs font-semibold"><AlertTriangle size={14} /> Critical Breach</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button onClick={() => toggleExpandScan(scan.id)} className="flex-1 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all text-center">
+                          {expandedScanId === scan.id ? 'Hide Audit' : 'Review Audit'}
+                        </button>
+                        <button onClick={() => handleDownloadPDF(scan.id, scan.model_name)} className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all">
+                          <Download size={16} />
+                        </button>
+                      </div>
+
+                      <AnimatePresence>
+                        {expandedScanId === scan.id && (
+                          <motion.div className="mt-2 p-4 rounded-xl border border-slate-800 bg-slate-950/60 w-full" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                            <div className="mb-4">
+                              <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
+                                <AlertTriangle size={14} /> Threat Assessment Narrative
+                              </h4>
+                              <p className="text-xs text-slate-400 leading-relaxed">{scan.summary}</p>
                             </div>
-                          </td>
-                        </tr>
-
-                        <AnimatePresence>
-                          {expandedScanId === scan.id && (
-                            <tr>
-                              <td colSpan="6" className="px-6 py-4 bg-slate-950/40">
-                                <motion.div className="p-5 rounded-xl border border-slate-800 bg-slate-900/30 w-full" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                  <div className="mb-4">
-                                    <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
-                                      <AlertTriangle size={14} /> Threat Assessment Narrative
-                                    </h4>
-                                    <p className="text-xs text-slate-400 leading-relaxed">{scan.summary}</p>
-                                  </div>
-
-                                  {scan.remediation_steps && (
-                                    <div className="w-full">
-                                      <h4 className="text-xs font-orbitron font-bold text-amber-400 mb-3 uppercase tracking-wider">Required Compliance Deployment Modules:</h4>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                        {scan.remediation_steps.map((step, sIdx) => (
-                                          <div key={sIdx} className="p-4 rounded-xl border border-amber-500/20 bg-slate-950/80 relative overflow-hidden group w-full">
-                                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
-                                              <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-widest font-orbitron">
-                                                {getCategoryIcon(step.category)} {step.title}
-                                              </span>
-                                              <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL LIABILITY</span>
-                                            </div>
-                                            <p className="text-xs text-slate-300 mb-3">{step.description}</p>
-                                            <button onClick={() => setIsContactSalesModalOpen(true)} className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-orbitron font-bold text-xs tracking-wider flex items-center justify-center gap-2 transition-all">
-                                              <Lock size={12} /> Inject Module to Mitigate Risk
-                                            </button>
-                                          </div>
-                                        ))}
-                                      </div>
+                            {scan.remediation_steps && (
+                              <div className="w-full flex flex-col gap-4">
+                                <h4 className="text-xs font-orbitron font-bold text-amber-400 uppercase tracking-wider">Required Modules:</h4>
+                                {scan.remediation_steps.map((step, sIdx) => (
+                                  <div key={sIdx} className="p-4 rounded-xl border border-amber-500/20 bg-slate-950/80 w-full">
+                                    <div className="flex flex-col gap-1 mb-2">
+                                      <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-widest font-orbitron">
+                                        {getCategoryIcon(step.category)} {step.title}
+                                      </span>
+                                      <span className="w-max text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL LIABILITY</span>
                                     </div>
-                                  )}
-                                </motion.div>
-                              </td>
-                            </tr>
-                          )}
-                        </AnimatePresence>
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+                                    <p className="text-xs text-slate-300 mb-3">{step.description}</p>
+                                    <button onClick={() => setIsContactSalesModalOpen(true)} className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-orbitron font-bold text-xs tracking-wider flex items-center justify-center gap-2 transition-all">
+                                      <Lock size={12} /> Inject Module
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout */}
+                <div className="hidden lg:block w-full overflow-x-auto">
+                  <table className="min-w-full text-left table-auto">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-900/40">
+                        <th className="px-6 py-3.5 whitespace-nowrap">Model Identifier</th>
+                        <th className="px-6 py-3.5 whitespace-nowrap">Sector</th>
+                        <th className="px-6 py-3.5 whitespace-nowrap">Risk Vector</th>
+                        <th className="px-6 py-3.5 whitespace-nowrap">Legal Status</th>
+                        <th className="px-6 py-3.5 whitespace-nowrap">Scan Date</th>
+                        <th className="px-6 py-3.5 text-right whitespace-nowrap">Operational Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm text-slate-300">
+                      {filteredScans.map((scan) => (
+                        <React.Fragment key={scan.id}>
+                          <tr className="border-b border-slate-900/60 hover:bg-slate-800/20 transition-all">
+                            <td className="px-6 py-4 font-bold text-slate-100 whitespace-nowrap">{scan.model_name || 'System Internal'}</td>
+                            <td className="px-6 py-4 text-slate-400 text-xs whitespace-nowrap">{scan.industry || 'Global'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full border" style={{ background: getRiskTierColor(scan.risk_tier), borderColor: getRiskTierBorder(scan.risk_tier), color: getRiskTierText(scan.risk_tier) }}>
+                                {scan.risk_tier}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {scan.compliance_status ? (
+                                <span className="text-emerald-400 flex items-center gap-1 text-xs font-semibold"><CheckCircle size={14} /> Clear</span>
+                              ) : (
+                                <span className="text-red-400 flex items-center gap-1 text-xs font-semibold"><AlertTriangle size={14} /> Critical Breach</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">{scan.created_at ? new Date(scan.created_at).toLocaleDateString() : 'N/A'}</td>
+                            <td className="px-6 py-4 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-2">
+                                <button onClick={() => toggleExpandScan(scan.id)} className="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
+                                  {expandedScanId === scan.id ? 'Hide Audit' : 'Review Audit'}
+                                </button>
+                                <button onClick={() => handleDownloadPDF(scan.id, scan.model_name)} className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all">
+                                  <Download size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+
+                          <AnimatePresence>
+                            {expandedScanId === scan.id && (
+                              <tr>
+                                <td colSpan="6" className="px-6 py-4 bg-slate-950/40">
+                                  <motion.div className="p-5 rounded-xl border border-slate-800 bg-slate-900/30 w-full" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                    <div className="mb-4">
+                                      <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
+                                        <AlertTriangle size={14} /> Threat Assessment Narrative
+                                      </h4>
+                                      <p className="text-xs text-slate-400 leading-relaxed">{scan.summary}</p>
+                                    </div>
+
+                                    {scan.remediation_steps && (
+                                      <div className="w-full">
+                                        <h4 className="text-xs font-orbitron font-bold text-amber-400 mb-3 uppercase tracking-wider">Required Compliance Deployment Modules:</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                                          {scan.remediation_steps.map((step, sIdx) => (
+                                            <div key={sIdx} className="p-4 rounded-xl border border-amber-500/20 bg-slate-950/80 relative overflow-hidden group w-full">
+                                              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
+                                                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-widest font-orbitron">
+                                                  {getCategoryIcon(step.category)} {step.title}
+                                                </span>
+                                                <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL LIABILITY</span>
+                                              </div>
+                                              <p className="text-xs text-slate-300 mb-3">{step.description}</p>
+                                              <button onClick={() => setIsContactSalesModalOpen(true)} className="w-full py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-orbitron font-bold text-xs tracking-wider flex items-center justify-center gap-2 transition-all">
+                                                <Lock size={12} /> Inject Module to Mitigate Risk
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                </td>
+                              </tr>
+                            )}
+                          </AnimatePresence>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
