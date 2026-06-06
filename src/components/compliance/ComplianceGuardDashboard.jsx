@@ -207,7 +207,6 @@ export default function ComplianceGuardDashboard() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      // CRITICAL FIX: Safe fallback to prevent App Crash on undefined modelName
       const safeFileName = modelName ? modelName.replace(/\s+/g, '_') : 'System_Internal';
       a.download = `ConnectGlobal_Compliance_Audit_${safeFileName}.pdf`;
       document.body.appendChild(a);
@@ -309,7 +308,6 @@ export default function ComplianceGuardDashboard() {
                   <option value="">All Vulnerability Levels</option>
                   {Object.values(AI_RISK_TIERS).map(tier => <option key={tier} value={tier}>{tier}</option>)}
                 </select>
-                {/* CRITICAL FIX: Removed whitespace-nowrap and added shrink-0 to prevent mobile horizontal scroll */}
                 <label className="flex items-center gap-2 cursor-pointer mt-2 sm:mt-0">
                   <input type="checkbox" checked={showCompliantOnly} onChange={(e) => setShowCompliantOnly(e.target.checked)} className="w-4 h-4 rounded shrink-0" style={{ accentColor: '#76fbd3' }} />
                   <span className="text-xs font-semibold text-slate-400">Show Compliant Systems Only</span>
@@ -334,7 +332,6 @@ export default function ComplianceGuardDashboard() {
 
             {!loading && filteredScans.length > 0 && (
               <div className="w-full">
-                {/* Mobile Card Layout */}
                 <div className="block lg:hidden divide-y divide-slate-800">
                   {filteredScans.map((scan) => (
                     <div key={scan.id} className="p-4 bg-slate-900/20 flex flex-col gap-3">
@@ -364,7 +361,6 @@ export default function ComplianceGuardDashboard() {
 
                       <AnimatePresence>
                         {expandedScanId === scan.id && (
-                          {/* CRITICAL FIX: Added overflow-hidden to prevent UI bleeding during height expansion */}
                           <motion.div className="mt-2 p-4 rounded-xl border border-slate-800 bg-slate-950/60 w-full overflow-hidden" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                             <div className="mb-4">
                               <h4 className="text-xs font-orbitron font-bold text-red-400 mb-1.5 flex items-center gap-2 uppercase tracking-wider">
@@ -398,7 +394,6 @@ export default function ComplianceGuardDashboard() {
                   ))}
                 </div>
 
-                {/* Desktop Table Layout */}
                 <div className="hidden lg:block w-full overflow-x-auto">
                   <table className="min-w-full text-left table-auto">
                     <thead>
@@ -443,7 +438,6 @@ export default function ComplianceGuardDashboard() {
                           </tr>
 
                           <AnimatePresence>
-                            {/* CRITICAL FIX: Added explicit motion.tr with unique key to prevent React/DOM errors and ensure valid exit animations */}
                             {expandedScanId === scan.id && (
                               <motion.tr
                                 key={`expand-${scan.id}`}
